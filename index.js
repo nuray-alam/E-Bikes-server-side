@@ -4,6 +4,8 @@ const cors = require('cors');
 require('dotenv').config();
 const admin = require("firebase-admin");
 const { MongoClient } = require('mongodb');
+const ObjectId = require('mongodb').ObjectId;
+
 const port = process.env.PORT || 5000;
 
 // Middleware
@@ -50,7 +52,8 @@ async function run() {
         await client.connect();
         const database = client.db('e_bikes');
         const bikeCollection = database.collection('bikes');
-        const usersCollection = database.collection('users')
+        const usersCollection = database.collection('users');
+        const orderCollection = database.collection('orders');
         console.log("database connected");
 
         // GET API for all bikes
@@ -60,6 +63,36 @@ async function run() {
             const cursor = bikeCollection.find({});
             const bikes = await cursor.toArray();
             res.json(bikes)
+        })
+
+        //GET API for a single bike Info
+        app.get('/bike/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const bike = await bikeCollection.findOne(query);
+            res.json(bike);
+        })
+        //GET API for all orders
+        app.get('/orders', async (req, res) => {
+
+            const cursor = orderCollection.find({});
+            const orders = await cursor.toArray();
+            res.json(orders)
+        })
+
+                //DELETE Order API
+                app.delete('/orders/:id', async (req, res) => {
+                    const id = req.params.id;
+                    const query = { _id: ObjectId(id) }
+                    const result = await orderCollection.deleteOne(query);
+                    res.json(result);
+                })
+
+        //POST API for add new order
+        app.post('/proceedOrder', async (req, res) => {
+            const order = req.body;
+            const result = await orderCollection.insertOne(order);
+            res.send(result)
         })
 
         //POST API for adding new bike
@@ -116,6 +149,25 @@ async function run() {
         })
 
         // adding role for an user
+        app.put('/users/admin', verifyToken, async (req, res) => {
+            const user = req.body;
+            const requester = req.decodedEmail;
+            if (requester) {
+                const requesterAccount = await usersCollection.findOne({ email: requester })
+                if (requesterAccount.role === 'admin') {
+                    const filter = { email: user.email };
+                    const updateDoc = { $set: { role: 'admin' } };
+                    const result = await usersCollection.updateOne(filter, updateDoc);
+                    res.json(result);
+                }
+
+            }
+            else {
+                res.status(403).json({ message: 'you don to have access to make admin' })
+            }
+
+        })
+ // Making an admin
         app.put('/users/admin', verifyToken, async (req, res) => {
             const user = req.body;
             const requester = req.decodedEmail;
