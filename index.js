@@ -17,12 +17,14 @@ app.use(express.json());
 let serviceAccount;
 try {
 
-     serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+
 
 } catch (err) {
     // 👇️ This runs
     console.log('Error: ', err.message);
 }
+
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
