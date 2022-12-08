@@ -14,7 +14,15 @@ app.use(express.json());
 
 
 // const serviceAccount = require("./e-bikes-firebase-adminsdk.json");
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
+let serviceAccount;
+try {
+
+     serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+
+} catch (err) {
+    // 👇️ This runs
+    console.log('Error: ', err.message);
+}
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
@@ -80,13 +88,13 @@ async function run() {
             res.json(orders)
         })
 
-                //DELETE Order API
-                app.delete('/orders/:id', async (req, res) => {
-                    const id = req.params.id;
-                    const query = { _id: ObjectId(id) }
-                    const result = await orderCollection.deleteOne(query);
-                    res.json(result);
-                })
+        //DELETE Order API
+        app.delete('/orders/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) }
+            const result = await orderCollection.deleteOne(query);
+            res.json(result);
+        })
 
         //POST API for add new order
         app.post('/proceedOrder', async (req, res) => {
@@ -97,7 +105,7 @@ async function run() {
 
         //POST API for adding new bike
 
-        app.post('/bikes',verifyToken, async (req, res) => {
+        app.post('/bikes', verifyToken, async (req, res) => {
             const user = req.body;
             const requester = req.decodedEmail;
             if (requester) {
@@ -167,7 +175,7 @@ async function run() {
             }
 
         })
- // Making an admin
+        // Making an admin
         app.put('/users/admin', verifyToken, async (req, res) => {
             const user = req.body;
             const requester = req.decodedEmail;
