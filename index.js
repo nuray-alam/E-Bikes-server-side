@@ -13,17 +13,18 @@ app.use(cors())
 app.use(express.json());
 
 
-// const serviceAccount = require("./e-bikes-firebase-adminsdk.json");
-let serviceAccount;
-try {
+const serviceAccount = require("./e-bikes-firebase-adminsdk.json");
 
-    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+// let serviceAccount;
+// try {
+
+//     serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 
 
-} catch (err) {
-    // 👇️ This runs
-    console.log('Error: ', err.message);
-}
+// } catch (err) {
+//     // 👇️ This runs
+//     console.log('Error: ', err.message);
+// }
 
 
 admin.initializeApp({
