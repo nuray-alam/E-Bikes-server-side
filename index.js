@@ -14,18 +14,7 @@ app.use(express.json());
 
 
 const serviceAccount = require("./e-bikes-firebase-adminsdk.json");
-
-// let serviceAccount;
-// try {
-
-//     serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-
-
-// } catch (err) {
-//     // 👇️ This runs
-//     console.log('Error: ', err.message);
-// }
-
+// const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
@@ -65,6 +54,8 @@ async function run() {
         const bikeCollection = database.collection('bikes');
         const usersCollection = database.collection('users');
         const orderCollection = database.collection('orders');
+        const reviewCollection = database.collection('reviews')
+        const blogCollection = database.collection('blogs');
         console.log("database connected");
 
         // GET API for all bikes
@@ -84,11 +75,42 @@ async function run() {
             res.json(bike);
         })
         //GET API for all orders
-        app.get('/orders', async (req, res) => {
+        app.get('/orders', verifyToken, async (req, res) => {
+            const requester = req.decodedEmail;
+            if (requester) {
+                const cursor = orderCollection.find({});
+                const orders = await cursor.toArray();
+                res.json(orders)
+            }
+            else {
+                res.status(403).json({ message: 'you do not to have access for orders' })
+            }
+        })
 
-            const cursor = orderCollection.find({});
-            const orders = await cursor.toArray();
-            res.json(orders)
+
+        //GET API for all blogs
+        app.get('/blogs', async (req, res) => {
+
+            const cursor = blogCollection.find({});
+            const blogs = await cursor.toArray();
+            res.json(blogs)
+        })
+
+     
+
+        //GET API for my orders
+
+        app.get('/myOrders/:email',async (req, res) => {
+           
+            
+        
+            const email = req.params.email;
+            const query = { email: email };
+            const cursor = orderCollection.find(query);
+            const myOrders = await cursor.toArray();
+            res.json(myOrders)
+     
+        
         })
 
         //DELETE Order API
@@ -105,6 +127,20 @@ async function run() {
             const result = await orderCollection.insertOne(order);
             res.send(result)
         })
+
+                //UPDATE Order Status API
+                app.put('/orders/:id', async (req, res) => {
+                    const id = req.params.id;
+                    const filter = { _id: ObjectId(id) };
+                    const options = { upsert: true };
+                    const updateDoc = {
+                        $set: {
+                            status: 'shipped'
+                        },
+                    };
+                    const result = await orderCollection.updateOne(filter, updateDoc, options);
+                    res.json(result);
+                })
 
         //POST API for adding new bike
 
@@ -124,6 +160,31 @@ async function run() {
                 res.status(403).json({ message: 'you do not have access to add a bike' })
             }
 
+        })
+
+        app.get('/review', async (req, res) => {
+
+            const cursor = reviewCollection.find({});
+            const reviews = await cursor.toArray();
+            res.json(reviews)
+        })
+        //  POST API  for review
+        app.post('/review', async (req, res) => {
+            
+                    const review = req.body;
+                    const result = await reviewCollection.insertOne(review);
+                    res.json(result)
+
+        })
+
+
+
+        // DELETE API for delete a bike
+        app.delete('/bike/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) }
+            const result = await bikeCollection.deleteOne(query);
+            res.json(result);
         })
 
         //POST API for Creating user with email and password
@@ -159,25 +220,7 @@ async function run() {
 
         })
 
-        // adding role for an user
-        app.put('/users/admin', verifyToken, async (req, res) => {
-            const user = req.body;
-            const requester = req.decodedEmail;
-            if (requester) {
-                const requesterAccount = await usersCollection.findOne({ email: requester })
-                if (requesterAccount.role === 'admin') {
-                    const filter = { email: user.email };
-                    const updateDoc = { $set: { role: 'admin' } };
-                    const result = await usersCollection.updateOne(filter, updateDoc);
-                    res.json(result);
-                }
 
-            }
-            else {
-                res.status(403).json({ message: 'you don to have access to make admin' })
-            }
-
-        })
         // Making an admin
         app.put('/users/admin', verifyToken, async (req, res) => {
             const user = req.body;
