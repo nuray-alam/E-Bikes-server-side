@@ -18,7 +18,7 @@ app.use(express.json());
 let serviceAccount;
 try {
 
-     serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT;
+    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 
 } catch (err) {
     // 👇️ This runs
@@ -107,21 +107,21 @@ async function run() {
             res.json(blogs)
         })
 
-     
+
 
         //GET API for my orders
 
-        app.get('/myOrders/:email',async (req, res) => {
-           
-            
-        
+        app.get('/myOrders/:email', async (req, res) => {
+
+
+
             const email = req.params.email;
             const query = { email: email };
             const cursor = orderCollection.find(query);
             const myOrders = await cursor.toArray();
             res.json(myOrders)
-     
-        
+
+
         })
 
         //DELETE Order API
@@ -139,19 +139,19 @@ async function run() {
             res.send(result)
         })
 
-                //UPDATE Order Status API
-                app.put('/orders/:id', async (req, res) => {
-                    const id = req.params.id;
-                    const filter = { _id: ObjectId(id) };
-                    const options = { upsert: true };
-                    const updateDoc = {
-                        $set: {
-                            status: 'shipped'
-                        },
-                    };
-                    const result = await orderCollection.updateOne(filter, updateDoc, options);
-                    res.json(result);
-                })
+        //UPDATE Order Status API
+        app.put('/orders/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    status: 'shipped'
+                },
+            };
+            const result = await orderCollection.updateOne(filter, updateDoc, options);
+            res.json(result);
+        })
 
         //POST API for adding new bike
 
@@ -181,10 +181,10 @@ async function run() {
         })
         //  POST API  for review
         app.post('/review', async (req, res) => {
-            
-                    const review = req.body;
-                    const result = await reviewCollection.insertOne(review);
-                    res.json(result)
+
+            const review = req.body;
+            const result = await reviewCollection.insertOne(review);
+            res.json(result)
 
         })
 
