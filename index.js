@@ -13,8 +13,19 @@ app.use(cors())
 app.use(express.json());
 
 
-const serviceAccount = require("./e-bikes-firebase-adminsdk.json");
+// const serviceAccount = require("./e-bikes-firebase-adminsdk.json");
 // const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
+let serviceAccount;
+try {
+
+     serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT;
+
+} catch (err) {
+    // 👇️ This runs
+    console.log('Error: ', err.message);
+}
+
+
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
